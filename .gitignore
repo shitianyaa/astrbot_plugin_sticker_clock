@@ -55,11 +55,3 @@ data/
 
 # 临时占位说明（用户放完图片后会删，但 Git 不需要追踪）
 # images/README.txt 由用户决定要不要保留
-
-# 用户的贴纸图片：仓库只发布代码，图片由用户自备（避免版权问题）
-images/*.png
-images/*.jpg
-images/*.jpeg
-images/*.gif
-images/*.webp
-!images/README.txt

@@ -5,6 +5,14 @@ Copyright (c) 2026 shitianyaa
 This is a port of the original sticker_time_bot project by imxieyi
 (https://github.com/imxieyi/sticker_time_bot), also licensed under MIT.
 
+NOTE: The MIT license below applies to the source code only.
+The sticker images bundled under images/ are from the Telegram sticker pack
+"現在幾點了?!!!!! !" by @Actfs2013
+(https://fstik.app/stickerSet/what_what_time_is_it).
+Copyright of the images belongs to their original author.
+If you are the rights holder and want them removed, please open an issue
+on the repository.
+
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
 in the Software without restriction, including without limitation the rights

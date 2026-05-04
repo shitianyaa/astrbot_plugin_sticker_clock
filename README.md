@@ -22,17 +22,12 @@
    ```
    或直接下载 zip 解压到 `data/plugins/astrbot_plugin_sticker_clock/`。
 
-2. **准备贴纸图片**（仓库里**不**包含图片，需要自备）：
-   - 在插件目录下创建 `images/` 子目录
-   - 放 12 张图片，命名 `0.png` ~ `11.png`
+2. **贴纸图片**：仓库已自带 12 张贴纸，clone 下来即可使用。
+   - 图片位于 `images/0.png` ~ `images/11.png`
    - 当前小时通过 `hour % 12` 选取（0/12 点用同一张，依此类推）
+   - 想换成自己的贴纸：直接覆盖这 12 个文件即可（保持文件名）
    - 也支持 `.jpg` `.jpeg` `.gif` `.webp`，按 `image_ext_priority` 顺序匹配
    - 若开启 `use_24h_mode`，则需要 `0.png` ~ `23.png` 共 24 张
-
-   贴纸来源建议：
-   - 自己用 AI 生成（推荐 256×256 或 512×512）
-   - 网上找免费 CC0 / 自有版权的素材
-   - 把 Telegram 表情包的 `.tgs/.webp` 转 png 后命名
 
 3. **安装依赖**（Windows 用户必装）：
    ```bash
@@ -115,80 +110,26 @@ astrbot_plugin_sticker_clock/
 ├─ README.md
 ├─ LICENSE
 ├─ main.py
-└─ images/             # ⚠️ 仓库里不含图片，需要自备
+└─ images/             # 已自带 12 张贴纸，可直接使用
    ├─ 0.png            # 0 点 / 12 点用
    ├─ 1.png            # 1 点 / 13 点用
    ├─ ...
    └─ 11.png           # 11 点 / 23 点用
 ```
 
-## 🌐 不同环境部署提示
+## 🎨 自带贴纸版权说明
 
-### 🖥️ Windows（原生）
+本仓库自带的 12 张贴纸来自 Telegram 表情包：
 
-- 默认情况下 Python 没有 IANA 时区数据库，**必须装 `tzdata`**：
-  ```bash
-  pip install tzdata
-  ```
-  不装的话只有 `Asia/Shanghai`（插件内置 fallback 到 UTC+8）能用，其他时区会报错。
-- 路径用 `D:\path\to\images` 或 `D:/path/to/images` 都行，插件会自动转 `file:///` URI。
+- **作品名**：現在幾點了?!!!!! !
+- **作者**：@Actfs2013
+- **预览 / 原始来源**：[https://fstik.app/stickerSet/what_what_time_is_it](https://fstik.app/stickerSet/what_what_time_is_it)
 
-### 🐧 Linux / macOS（原生）
+贴纸版权归原作者 [@Actfs2013](https://t.me/Actfs2013) 所有，本仓库仅作为整点报时插件的默认素材便利使用。
 
-- 系统通常自带 tzdata，无需额外安装。
-- 路径用绝对路径，如 `/home/user/AstrBot/data/plugins/astrbot_plugin_sticker_clock/images`。
+> **如果你是原作者或版权方，认为此处使用侵犯了你的权益，请通过 [Issue](https://github.com/shitianyaa/astrbot_plugin_sticker_clock/issues) 联系，我会立即下架相关图片。**
 
-### 🐳 Docker
-
-- AstrBot 在容器里、QQ 协议端（NapCat/Lagrange）也在**同一个容器**：与原生一致。
-- AstrBot 在容器里、协议端在**宿主机或其他容器**：⚠️ `file:///` URI 协议端读不到图。两种解法：
-  1. **共享 volume**：把 `images/` 目录挂载到协议端能访问的路径，`image_dir` 配置写协议端的视角。
-  2. **改用 HTTP/HTTPS URL**：把图片传到对象存储或起个静态服务器，在 main.py 里把 `Image.fromFileSystem` 改为 `Image.fromURL`（这样跨机器也能用）。
-- 时区：容器默认 UTC，建议设置 `TZ=Asia/Shanghai` 环境变量，或者直接靠插件配置。
-
-### 🤖 不同消息平台
-
-| 平台 | 自动删除 | 备注 |
-|------|---------|------|
-| **aiocqhttp** (NapCat/Lagrange/go-cqhttp) | ✅ 支持（2 分钟内） | 协议端必须能读到图片文件 |
-| **Telegram** | ❌ | 发送为普通图片（非原生 sticker） |
-| **Discord** | ❌ | 发送为图片附件 |
-| **Lark / DingTalk** | ❌ | 走 AstrBot 通用消息链 |
-| **多 aiocqhttp 实例** | ✅ | 在 `platform_id` 里指定具体实例 ID，不指定则自动用第一个 |
-
-### 🔍 配置示例（按场景）
-
-**场景 A：单机 Windows + NapCat**（最常见）
-
-```yaml
-enabled: true
-default_timezone: Asia/Shanghai
-minute_offset: 0
-# 其他保持默认即可
-```
-
-**场景 B：管理员预设几个群，无需用户主动订阅**
-
-```yaml
-push_targets:
-  - "group:123456789"
-  - "group:987654321"
-default_sleeptime: 23   # 默认 23 点开始静音
-default_waketime: 7     # 默认 7 点恢复
-```
-
-**场景 C：跨容器部署（AstrBot 容器 + Lagrange 容器）**
-
-```yaml
-# 把贴纸目录挂载到两个容器都能访问的路径
-image_dir: "/shared/sticker_images"
-```
-
-并在 `docker-compose.yml` 里：
-```yaml
-volumes:
-  - ./shared_data:/shared
-```
+如不希望使用此套贴纸，将 `images/0.png` ~ `images/11.png` 替换为你自己的图片即可。
 
 ## 🔍 工作原理
 
