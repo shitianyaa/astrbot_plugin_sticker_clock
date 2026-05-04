@@ -18,9 +18,9 @@ from astrbot.api import logger, AstrBotConfig
 
 
 # ========== 常量 ==========
-KV_SUBSCRIBERS = "subscribers"      # list[str] —— 订阅会话的 unified_msg_origin
-KV_CHATS = "chats"                  # dict[umo, dict] —— 每个会话的配置
-SCHEDULER_POLL_SECONDS = 30         # 调度器轮询间隔
+KV_SUBSCRIBERS = "subscribers"  # list[str] —— 订阅会话的 unified_msg_origin
+KV_CHATS = "chats"  # dict[umo, dict] —— 每个会话的配置
+SCHEDULER_POLL_SECONDS = 30  # 调度器轮询间隔
 DEFAULT_TIMEZONE = "Asia/Shanghai"
 LOG_PREFIX = "[StickerClock]"
 
@@ -50,7 +50,7 @@ except ZoneInfoNotFoundError:
     "astrbot_plugin_sticker_clock",
     "shitianyaa",
     "整点贴纸提醒",
-    "1.0.1",
+    "1.0.2",
 )
 class StickerClockPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
@@ -66,8 +66,9 @@ class StickerClockPlugin(Star):
     async def initialize(self):
         """插件加载/重载时触发"""
         self._ensure_scheduler_started(reason="initialize")
-        logger.info(f"{LOG_PREFIX} 已加载，当前订阅数: "
-                    f"{len(await self._get_subscribers())}")
+        logger.info(
+            f"{LOG_PREFIX} 已加载，当前订阅数: {len(await self._get_subscribers())}"
+        )
 
     @filter.on_astrbot_loaded()
     async def on_loaded(self):
@@ -129,7 +130,9 @@ class StickerClockPlugin(Star):
         sent_count = 0
         for umo in targets:
             cd = chats.get(umo, {})
-            tz_name = cd.get("tz") or self.config.get("default_timezone", DEFAULT_TIMEZONE)
+            tz_name = cd.get("tz") or self.config.get(
+                "default_timezone", DEFAULT_TIMEZONE
+            )
             tz = _safe_zoneinfo(tz_name) if tz_name else _DEFAULT_TZ
 
             now = datetime.datetime.now(tz)
@@ -238,7 +241,9 @@ class StickerClockPlugin(Star):
         last_msg_id = cd.get("last_msg_id")
 
         # 优先尝试 aiocqhttp 直发以拿到 message_id
-        handled, new_msg_id, send_err = await self._aiocqhttp_send_image(umo, image_path)
+        handled, new_msg_id, send_err = await self._aiocqhttp_send_image(
+            umo, image_path
+        )
 
         if handled:
             # 平台是 aiocqhttp。无论成败，都不再走通用回退（避免双发）
@@ -338,17 +343,27 @@ class StickerClockPlugin(Star):
         """发送失败时的处理：被拉黑/踢出 -> 自动取消订阅"""
         msg = str(err).lower()
         block_signals = (
-            "blocked", "kicked", "not a member", "chat not found",
-            "deactivated", "have no rights", "not enough rights",
-            "peer_id_invalid", "deleted", "no permission",
-            "user_not_in_group", "group_not_found",
+            "blocked",
+            "kicked",
+            "not a member",
+            "chat not found",
+            "deactivated",
+            "have no rights",
+            "not enough rights",
+            "peer_id_invalid",
+            "deleted",
+            "no permission",
+            "user_not_in_group",
+            "group_not_found",
         )
         if not any(s in msg for s in block_signals):
             logger.warning(f"{LOG_PREFIX} 发送 {umo} 失败: {err}")
             return
 
         if not self.config.get("auto_unsubscribe_on_block", True):
-            logger.warning(f"{LOG_PREFIX} {umo} 似乎已不可达，但 auto_unsubscribe_on_block=false")
+            logger.warning(
+                f"{LOG_PREFIX} {umo} 似乎已不可达，但 auto_unsubscribe_on_block=false"
+            )
             return
 
         logger.info(f"{LOG_PREFIX} {umo} 似乎已不可达，自动取消订阅")
@@ -430,7 +445,11 @@ class StickerClockPlugin(Star):
                 return f"{default_plat}:FriendMessage:{ident}"
             return None
         if len(parts) == 3:
-            plat, kind, ident = parts[0].strip(), parts[1].strip().lower(), parts[2].strip()
+            plat, kind, ident = (
+                parts[0].strip(),
+                parts[1].strip().lower(),
+                parts[2].strip(),
+            )
             if not plat or not ident:
                 return None
             if kind == "group":
@@ -487,7 +506,11 @@ class StickerClockPlugin(Star):
         idx = hour if use_24h else (hour % 12)
 
         ext_priority = self.config.get("image_ext_priority", []) or [
-            "png", "jpg", "jpeg", "gif", "webp"
+            "png",
+            "jpg",
+            "jpeg",
+            "gif",
+            "webp",
         ]
         if not isinstance(ext_priority, list):
             ext_priority = ["png"]
@@ -537,12 +560,12 @@ class StickerClockPlugin(Star):
     # 指令组 /clock
     # =====================================================================
 
-    @filter.command_group("clock", alias={"贴纸时钟", "整点报时"})
+    @filter.command_group("clock")
     def clock(self):
         """整点贴纸提醒指令组"""
         pass
 
-    @clock.command("start", alias={"订阅", "开始"})
+    @clock.command("start")
     async def cmd_start(self, event: AstrMessageEvent):
         """订阅当前会话的整点贴纸推送"""
         umo = event.unified_msg_origin
@@ -562,7 +585,7 @@ class StickerClockPlugin(Star):
             f"使用 /clock help 查看更多指令"
         )
 
-    @clock.command("stop", alias={"退订", "停止"})
+    @clock.command("stop")
     async def cmd_stop(self, event: AstrMessageEvent):
         """取消当前会话的整点贴纸推送"""
         umo = event.unified_msg_origin
@@ -579,7 +602,7 @@ class StickerClockPlugin(Star):
         logger.info(f"{LOG_PREFIX} {umo} 退订")
         yield event.plain_result(f"已取消订阅，会话 ID: {umo}")
 
-    @clock.command("status", alias={"状态"})
+    @clock.command("status")
     async def cmd_status(self, event: AstrMessageEvent):
         """查看当前会话的订阅状态和配置"""
         umo = event.unified_msg_origin
@@ -623,14 +646,16 @@ class StickerClockPlugin(Star):
             ds = self._parse_default_hour("default_sleeptime")
             dw = self._parse_default_hour("default_waketime")
             if ds is not None and dw is not None:
-                lines.append(f"过滤规则: 全局默认睡眠 {ds}:00 ~ {dw}:00（可用 /clock nosleep 禁用）")
+                lines.append(
+                    f"过滤规则: 全局默认睡眠 {ds}:00 ~ {dw}:00（可用 /clock nosleep 禁用）"
+                )
             else:
                 lines.append("过滤规则: 全天发送")
         yield event.plain_result("\n".join(lines))
 
-    @clock.command("tz", alias={"timezone", "时区"})
+    @clock.command("timezone", alias={"tz"})
     async def cmd_tz(self, event: AstrMessageEvent, zone: str = ""):
-        """设置或查看时区。用法: /clock tz Asia/Shanghai"""
+        """设置或查看时区。用法: /clock timezone Asia/Shanghai"""
         umo = event.unified_msg_origin
         if not zone:
             cd = await self._get_chat_data(umo)
@@ -649,7 +674,7 @@ class StickerClockPlugin(Star):
         await self._update_chat_data(umo, tz=zone)
         yield event.plain_result(f"✅ 时区已设为 {zone}")
 
-    @clock.command("autodelete", alias={"自动删除"})
+    @clock.command("autodelete")
     async def cmd_autodelete(self, event: AstrMessageEvent, value: str = ""):
         """开启或关闭自动删除上一条贴纸（仅 QQ 平台支持）。用法: /clock autodelete on|off"""
         umo = event.unified_msg_origin
@@ -662,21 +687,25 @@ class StickerClockPlugin(Star):
         v = value.lower()
         if v in ("on", "true", "1", "开"):
             await self._update_chat_data(umo, autodelete=True)
-            yield event.plain_result("✅ 已开启自动删除（仅 QQ aiocqhttp 平台支持，且只能删 2 分钟内的消息）")
+            yield event.plain_result(
+                "✅ 已开启自动删除（仅 QQ aiocqhttp 平台支持，且只能删 2 分钟内的消息）"
+            )
         elif v in ("off", "false", "0", "关"):
             await self._update_chat_data(umo, autodelete=False)
             yield event.plain_result("已关闭自动删除")
         else:
             yield event.plain_result("用法: /clock autodelete on|off")
 
-    @clock.command("sleeptime", alias={"睡眠"})
+    @clock.command("sleeptime")
     async def cmd_sleeptime(self, event: AstrMessageEvent, hour: str = ""):
         """设置睡眠开始时间。用法: /clock sleeptime 22  （22 点开始静音）"""
         umo = event.unified_msg_origin
         if not hour:
             cd = await self._get_chat_data(umo)
             v = cd.get("sleeptime")
-            yield event.plain_result(f"睡眠开始: {v}:00" if v is not None else "未设置睡眠时间")
+            yield event.plain_result(
+                f"睡眠开始: {v}:00" if v is not None else "未设置睡眠时间"
+            )
             return
         h = self._parse_hour(hour)
         if h is None:
@@ -696,14 +725,16 @@ class StickerClockPlugin(Star):
             msg += "，已清空白名单小时"
         yield event.plain_result(msg)
 
-    @clock.command("waketime", alias={"起床"})
+    @clock.command("waketime")
     async def cmd_waketime(self, event: AstrMessageEvent, hour: str = ""):
         """设置起床时间。用法: /clock waketime 7  （7 点恢复发送）"""
         umo = event.unified_msg_origin
         if not hour:
             cd = await self._get_chat_data(umo)
             v = cd.get("waketime")
-            yield event.plain_result(f"起床: {v}:00" if v is not None else "未设置起床时间")
+            yield event.plain_result(
+                f"起床: {v}:00" if v is not None else "未设置起床时间"
+            )
             return
         h = self._parse_hour(hour)
         if h is None:
@@ -722,7 +753,7 @@ class StickerClockPlugin(Star):
             msg += "，已清空白名单小时"
         yield event.plain_result(msg)
 
-    @clock.command("nosleep", alias={"取消睡眠"})
+    @clock.command("nosleep")
     async def cmd_nosleep(self, event: AstrMessageEvent):
         """删除睡眠/起床时间设置，并禁用全局默认睡眠时段"""
         umo = event.unified_msg_origin
@@ -745,7 +776,7 @@ class StickerClockPlugin(Star):
             "✅ 已禁用睡眠时段，全天发送（不再继承 WebUI 全局默认）"
         )
 
-    @clock.command("addhour", alias={"添加小时"})
+    @clock.command("addhour")
     async def cmd_addhour(self, event: AstrMessageEvent, hour: str = ""):
         """把小时加入白名单。用法: /clock addhour 9  （加入后只在白名单内发送）"""
         umo = event.unified_msg_origin
@@ -777,7 +808,7 @@ class StickerClockPlugin(Star):
             msg += "，已清除睡眠/起床时间"
         yield event.plain_result(msg)
 
-    @clock.command("delhour", alias={"删除小时"})
+    @clock.command("delhour")
     async def cmd_delhour(self, event: AstrMessageEvent, hour: str = ""):
         """从白名单移除小时。用法: /clock delhour 9"""
         umo = event.unified_msg_origin
@@ -794,15 +825,13 @@ class StickerClockPlugin(Star):
             yield event.plain_result(f"{h}:00 不在白名单里")
             return
         timelist.remove(h)
-        await self._update_chat_data(
-            umo, timelist=timelist if timelist else None
-        )
+        await self._update_chat_data(umo, timelist=timelist if timelist else None)
         msg = f"✅ 已移除 {h}:00"
         if not timelist:
             msg += "，白名单已清空（恢复全天/睡眠时段规则）"
         yield event.plain_result(msg)
 
-    @clock.command("listhours", alias={"小时列表"})
+    @clock.command("listhours")
     async def cmd_listhours(self, event: AstrMessageEvent):
         """查看白名单小时"""
         cd = await self._get_chat_data(event.unified_msg_origin)
@@ -814,7 +843,7 @@ class StickerClockPlugin(Star):
         lines.extend(f"  {h:02d}:00" for h in timelist)
         yield event.plain_result("\n".join(lines))
 
-    @clock.command("clearhours", alias={"清空小时"})
+    @clock.command("clearhours")
     async def cmd_clearhours(self, event: AstrMessageEvent):
         """清空白名单小时"""
         umo = event.unified_msg_origin
@@ -825,7 +854,7 @@ class StickerClockPlugin(Star):
         await self._update_chat_data(umo, timelist=None)
         yield event.plain_result("✅ 白名单已清空")
 
-    @clock.command("test", alias={"测试"})
+    @clock.command("test")
     async def cmd_test(self, event: AstrMessageEvent, hour_str: str = ""):
         """立即发送当前小时（或指定小时）的贴纸用于测试。用法: /clock test [0-23]"""
         umo = event.unified_msg_origin
@@ -852,7 +881,7 @@ class StickerClockPlugin(Star):
         yield event.image_result(str(path))
 
     @filter.permission_type(filter.PermissionType.ADMIN)
-    @clock.command("targets", alias={"目标"})
+    @clock.command("targets")
     async def cmd_targets(self, event: AstrMessageEvent):
         """[管理员] 查看所有推送目标（用户订阅 + WebUI 预设）"""
         subs = await self._get_subscribers()
@@ -886,7 +915,7 @@ class StickerClockPlugin(Star):
         parts.append(f"\n共 {len(all_targets)} 个目标（已去重）")
         yield event.plain_result("\n".join(parts))
 
-    @clock.command("help", alias={"帮助"})
+    @clock.command("help")
     async def cmd_help(self, event: AstrMessageEvent):
         """查看所有指令"""
         yield event.plain_result(
@@ -896,7 +925,7 @@ class StickerClockPlugin(Star):
             "/clock stop           取消订阅\n"
             "/clock status         查看状态\n"
             "\n[配置]\n"
-            "/clock tz <时区>      设置时区，如 Asia/Shanghai\n"
+            "/clock timezone <tz>  设置时区，如 Asia/Shanghai（别名 /clock tz）\n"
             "/clock autodelete on  发新贴纸时删旧的（仅 QQ）\n"
             "/clock sleeptime 22   设置睡眠开始（22 点）\n"
             "/clock waketime 7     设置起床时间（7 点）\n"

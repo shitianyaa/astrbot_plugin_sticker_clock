@@ -43,24 +43,24 @@
 在群聊或私聊里发送：
 
 ```
-/clock start          订阅当前会话
-/clock stop           取消订阅
-/clock status         查看当前会话状态
-/clock tz Asia/Tokyo  设置时区
-/clock autodelete on  发新贴纸时删旧的（仅 QQ）
-/clock sleeptime 22   设置睡眠开始（22 点）
-/clock waketime 7     设置起床时间（7 点）
-/clock nosleep        清除睡眠时段
-/clock addhour 9      只在 9 点发送（白名单模式）
-/clock delhour 9      移除白名单小时
-/clock listhours      查看白名单
-/clock clearhours     清空白名单
-/clock test [hour]    立即测试发送
-/clock targets        查看所有订阅会话（仅管理员）
-/clock help           完整帮助
+/clock start              订阅当前会话
+/clock stop               取消订阅
+/clock status             查看当前会话状态
+/clock timezone <tz>      设置时区，别名 /clock tz
+/clock autodelete on      发新贴纸时删旧的（仅 QQ）
+/clock sleeptime 22       设置睡眠开始（22 点）
+/clock waketime 7         设置起床时间（7 点）
+/clock nosleep            清除睡眠时段
+/clock addhour 9          只在 9 点发送（白名单模式）
+/clock delhour 9          移除白名单小时
+/clock listhours          查看白名单
+/clock clearhours         清空白名单
+/clock test [hour]        立即测试发送
+/clock targets            查看所有订阅会话（仅管理员）
+/clock help               完整帮助
 ```
 
-中文别名也可用：`/clock 订阅`、`/clock 时区 Asia/Shanghai`、`/clock 目标` 等。
+> 指令名仅支持英文（与原 sticker_time_bot 保持一致），不提供中文别名。
 
 ### 👀 谁能看什么
 
