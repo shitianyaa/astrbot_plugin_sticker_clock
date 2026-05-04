@@ -50,7 +50,7 @@ except ZoneInfoNotFoundError:
     "astrbot_plugin_sticker_clock",
     "shitianyaa",
     "整点贴纸提醒",
-    "1.0.0",
+    "1.0.1",
 )
 class StickerClockPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
