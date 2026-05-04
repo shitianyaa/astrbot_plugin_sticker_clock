@@ -7,7 +7,7 @@ description: |
   每小时整点向订阅会话发送对应小时的贴纸图片，支持：
   - /clock start | stop      订阅 / 取消订阅
   - /clock tz <Asia/Shanghai> 自定义时区
-  - /clock sleeptime / waketime / nosleep   设置睡眠时段
+  - /clock sleeptime / waketime / nosleep   设置睡眠时段（时间边界包含在内，sleeptime 和 waketime 整点都会发送）
   - /clock addhour / delhour / listhours / clearhours   自定义触发小时白名单
   - /clock autodelete on|off  推新贴纸时自动删除上一条（仅 aiocqhttp 支持）
 author: shitianyaa

@@ -8,7 +8,7 @@
 
 - 🕒 每小时整点（可改 `minute_offset`）自动发送对应小时的贴纸
 - 🌍 每个会话独立时区
-- 🌙 睡眠时段静音（如 22:00 ~ 7:00 不打扰）
+- 🌙 睡眠时段静音（如 22:00 ~ 7:00 不打扰，时间边界包含在内）
 - 📋 自定义小时白名单（只在指定整点发）
 - 🗑️ 自动删除上一条贴纸（仅 QQ aiocqhttp）
 - 🔌 多平台：aiocqhttp / Telegram / Discord / Lark / DingTalk
@@ -48,8 +48,8 @@
 /clock status             查看当前会话状态
 /clock timezone <tz>      设置时区，别名 /clock tz
 /clock autodelete on      发新贴纸时删旧的（仅 QQ）
-/clock sleeptime 22       设置睡眠开始（22 点）
-/clock waketime 7         设置起床时间（7 点）
+/clock sleeptime 22       设置睡眠开始（22 点，该整点仍会发送）
+/clock waketime 7         设置起床时间（7 点，该整点恢复发送）
 /clock nosleep            清除睡眠时段
 /clock addhour 9          只在 9 点发送（白名单模式）
 /clock delhour 9          移除白名单小时
@@ -100,7 +100,9 @@ push_targets:
   - "aiocqhttp:GroupMessage:111222333"         # 完整 unified_msg_origin
 ```
 
-### 🌙 默认睡眠时段的优先级
+### 🌙 睡眠时段说明
+
+**时间边界包含在内**：设置 `sleeptime 22` + `waketime 7` 时，22:00 和 7:00 这两个整点都会发送贴纸，23:00 ~ 6:00 静音。
 
 每个会话的"是否发送"判断顺序：
 

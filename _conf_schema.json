@@ -33,7 +33,7 @@
     "description": "默认睡眠开始时间",
     "type": "int",
     "default": -1,
-    "hint": "新订阅者自动继承的睡眠开始小时（0-23）。-1 表示禁用。例如设为 23：新订阅者默认 23:00 ~ default_waketime 之间不发送。已订阅者用 /clock sleeptime 自行覆盖"
+    "hint": "新订阅者自动继承的睡眠开始小时（0-23）。-1 表示禁用。例如设为 23：新订阅者默认 23:00 ~ default_waketime 之间不发送（时间边界包含在内，即 sleeptime 和 waketime 整点都会发送）。已订阅者用 /clock sleeptime 自行覆盖"
   },
   "default_waketime": {
     "description": "默认起床时间",

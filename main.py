@@ -639,7 +639,7 @@ class HourlyBroadcastPlugin(Star):
             tl = ", ".join(f"{h}:00" for h in sorted(timelist))
             lines.append(f"过滤规则: 仅白名单小时 [{tl}]")
         elif sleep is not None and wake is not None:
-            lines.append(f"过滤规则: 睡眠时段 {sleep}:00 ~ {wake}:00（不发送）")
+            lines.append(f"过滤规则: 睡眠时段 {sleep}:00 ~ {wake}:00（{sleep}:00 和 {wake}:00 仍发送）")
         elif cd.get("no_default_sleep"):
             lines.append("过滤规则: 全天发送（已禁用全局默认）")
         else:
@@ -647,7 +647,7 @@ class HourlyBroadcastPlugin(Star):
             dw = self._parse_default_hour("default_waketime")
             if ds is not None and dw is not None:
                 lines.append(
-                    f"过滤规则: 全局默认睡眠 {ds}:00 ~ {dw}:00（可用 /clock nosleep 禁用）"
+                    f"过滤规则: 全局默认睡眠 {ds}:00 ~ {dw}:00（{ds}:00 和 {dw}:00 仍发送，可用 /clock nosleep 禁用）"
                 )
             else:
                 lines.append("过滤规则: 全天发送")
@@ -698,7 +698,7 @@ class HourlyBroadcastPlugin(Star):
 
     @clock.command("sleeptime")
     async def cmd_sleeptime(self, event: AstrMessageEvent, hour: str = ""):
-        """设置睡眠开始时间。用法: /clock sleeptime 22  （22 点开始静音）"""
+        """设置睡眠开始时间。用法: /clock sleeptime 22  （22 点仍发送，23 点起静音）"""
         umo = event.unified_msg_origin
         if not hour:
             cd = await self._get_chat_data(umo)
@@ -727,7 +727,7 @@ class HourlyBroadcastPlugin(Star):
 
     @clock.command("waketime")
     async def cmd_waketime(self, event: AstrMessageEvent, hour: str = ""):
-        """设置起床时间。用法: /clock waketime 7  （7 点恢复发送）"""
+        """设置起床时间。用法: /clock waketime 7  （7 点恢复发送，该整点仍发送）"""
         umo = event.unified_msg_origin
         if not hour:
             cd = await self._get_chat_data(umo)
@@ -927,8 +927,8 @@ class HourlyBroadcastPlugin(Star):
             "\n[配置]\n"
             "/clock timezone <tz>  设置时区，如 Asia/Shanghai（别名 /clock tz）\n"
             "/clock autodelete on  发新贴纸时删旧的（仅 QQ）\n"
-            "/clock sleeptime 22   设置睡眠开始（22 点）\n"
-            "/clock waketime 7     设置起床时间（7 点）\n"
+            "/clock sleeptime 22   设置睡眠开始（22 点仍发送，23 点起静音）\n"
+            "/clock waketime 7     设置起床时间（7 点恢复发送，该整点仍发送）\n"
             "/clock nosleep        清除睡眠时段（也禁用全局默认）\n"
             "\n[白名单小时]\n"
             "/clock addhour 9      只在 9 点发送\n"
