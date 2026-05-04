@@ -1,0 +1,3 @@
+# Windows 上需要 tzdata 才能用 IANA 时区名（如 Asia/Shanghai）
+# Linux/macOS 系统时区库通常自带，可省略
+tzdata; sys_platform == "win32"

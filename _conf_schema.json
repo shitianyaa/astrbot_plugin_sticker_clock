@@ -1,0 +1,74 @@
+{
+  "enabled": {
+    "description": "启用整点贴纸推送",
+    "type": "bool",
+    "default": true,
+    "hint": "关闭后定时任务暂停，但订阅状态、配置等不会丢失"
+  },
+  "default_timezone": {
+    "description": "默认时区",
+    "type": "string",
+    "default": "Asia/Shanghai",
+    "hint": "未通过 /clock tz 设置时区的会话使用此时区。格式参考 IANA tz database，如 Asia/Shanghai、Asia/Tokyo、Europe/London。Windows 上若未安装 tzdata，将回退到固定 UTC+8"
+  },
+  "minute_offset": {
+    "description": "触发分钟",
+    "type": "int",
+    "default": 0,
+    "hint": "在每小时的第几分钟发送贴纸。默认 0（整点）。例如设为 30 则在 HH:30 发送。范围 0-59"
+  },
+  "platform_id": {
+    "description": "默认平台适配器 ID",
+    "type": "string",
+    "default": "",
+    "hint": "AstrBot「消息平台」页面里启用的适配器 ID，常见: aiocqhttp、napcat、qq_official、telegram。留空则自动检测，订阅时也会优先使用订阅者所在平台"
+  },
+  "push_targets": {
+    "description": "预设订阅列表",
+    "type": "list",
+    "default": [],
+    "hint": "管理员预设的推送目标，无需在群里发 /clock start 即可收到推送。每行一个，支持以下格式：\n  group:ID 或 private:ID（使用 platform_id 作为平台）\n  平台ID:group:ID 或 平台ID:private:ID（指定平台，覆盖 platform_id）\n  平台ID:GroupMessage:ID 或 平台ID:FriendMessage:ID（完整 unified_msg_origin，原样使用）\n这些会话会与 /clock start 订阅者合并去重，时区/睡眠等配置仍可在群里用指令覆盖"
+  },
+  "default_sleeptime": {
+    "description": "默认睡眠开始时间",
+    "type": "int",
+    "default": -1,
+    "hint": "新订阅者自动继承的睡眠开始小时（0-23）。-1 表示禁用。例如设为 23：新订阅者默认 23:00 ~ default_waketime 之间不发送。已订阅者用 /clock sleeptime 自行覆盖"
+  },
+  "default_waketime": {
+    "description": "默认起床时间",
+    "type": "int",
+    "default": -1,
+    "hint": "新订阅者自动继承的起床小时（0-23）。-1 表示禁用。需要与 default_sleeptime 同时设置才生效"
+  },
+  "image_dir": {
+    "description": "自定义贴纸目录（绝对路径）",
+    "type": "string",
+    "default": "",
+    "hint": "留空则使用插件目录下的 images/ 子目录。若自定义，必须是绝对路径，目录下需放置 0.png ~ 11.png（按 hour % 12 选取），也支持 0.jpg / 0.gif 等其他格式"
+  },
+  "image_ext_priority": {
+    "description": "图片扩展名优先级",
+    "type": "list",
+    "default": ["png", "jpg", "jpeg", "gif", "webp"],
+    "hint": "查找贴纸时按此顺序匹配扩展名。例如默认情况下，先找 0.png，找不到再找 0.jpg，依此类推"
+  },
+  "use_24h_mode": {
+    "description": "24 小时不同贴纸模式",
+    "type": "bool",
+    "default": false,
+    "hint": "开启后需要提供 0.png ~ 23.png 共 24 张图（每小时一张）。关闭则使用 12 张图（hour % 12，0/12 点同图）"
+  },
+  "send_target_interval": {
+    "description": "目标间发送间隔（秒）",
+    "type": "float",
+    "default": 1.5,
+    "hint": "向下一个订阅者发送之前的等待秒数，避免同一时刻向多个群/用户连发触发风控。范围 0.0 ~ 60，建议 1.5 ~ 3"
+  },
+  "auto_unsubscribe_on_block": {
+    "description": "被拉黑/踢出时自动取消订阅",
+    "type": "bool",
+    "default": true,
+    "hint": "推送时若返回错误（如群被解散、好友被删除等），自动从订阅列表移除该会话"
+  }
+}

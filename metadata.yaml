@@ -1,0 +1,28 @@
+name: astrbot_plugin_sticker_clock
+version: 1.0.0
+display_name: 贴纸时钟
+short_desc: 整点贴纸提醒，让你的群聊一小时一惊喜
+description: |
+  移植自 imxieyi/sticker_time_bot 的 AstrBot 版本。
+  每小时整点向订阅会话发送对应小时的贴纸图片，支持：
+  - /clock start | stop      订阅 / 取消订阅
+  - /clock tz <Asia/Shanghai> 自定义时区
+  - /clock sleeptime / waketime / nosleep   设置睡眠时段
+  - /clock addhour / delhour / listhours / clearhours   自定义触发小时白名单
+  - /clock autodelete on|off  推新贴纸时自动删除上一条（仅 aiocqhttp 支持）
+author: shitianyaa
+repo: https://github.com/shitianyaa/astrbot_plugin_sticker_clock
+keywords:
+  - sticker
+  - clock
+  - hourly
+  - reminder
+  - 贴纸
+  - 时钟
+  - 整点报时
+support_platforms:
+  - aiocqhttp
+  - telegram
+  - discord
+  - lark
+  - dingtalk

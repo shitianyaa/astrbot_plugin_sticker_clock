@@ -1,0 +1,65 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Local AstrBot config / runtime data（不要把订阅者数据上传）
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Claude / 其他工具的本地配置
+.claude/
+.aider*
+
+# 临时占位说明（用户放完图片后会删，但 Git 不需要追踪）
+# images/README.txt 由用户决定要不要保留
+
+# 用户的贴纸图片：仓库只发布代码，图片由用户自备（避免版权问题）
+images/*.png
+images/*.jpg
+images/*.jpeg
+images/*.gif
+images/*.webp
+!images/README.txt
