@@ -851,8 +851,8 @@ class StickerClockPlugin(Star):
             return
         yield event.image_result(str(path))
 
-    @clock.command("targets", alias={"目标"})
     @filter.permission_type(filter.PermissionType.ADMIN)
+    @clock.command("targets", alias={"目标"})
     async def cmd_targets(self, event: AstrMessageEvent):
         """[管理员] 查看所有推送目标（用户订阅 + WebUI 预设）"""
         subs = await self._get_subscribers()
