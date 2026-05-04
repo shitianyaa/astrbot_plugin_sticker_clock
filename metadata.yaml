@@ -1,7 +1,7 @@
 name: astrbot_plugin_sticker_clock
-version: 1.0.2
-display_name: 贴纸时钟
-short_desc: 整点贴纸提醒，让你的群聊一小时一惊喜
+version: 1.0.3
+display_name: 整点播报
+short_desc: 整点播报，每小时整点给群里发一张贴纸
 description: |
   移植自 imxieyi/sticker_time_bot 的 AstrBot 版本。
   每小时整点向订阅会话发送对应小时的贴纸图片，支持：
@@ -13,12 +13,12 @@ description: |
 author: shitianyaa
 repo: https://github.com/shitianyaa/astrbot_plugin_sticker_clock
 keywords:
-  - sticker
-  - clock
   - hourly
+  - broadcast
   - reminder
-  - 贴纸
-  - 时钟
+  - sticker
+  - 整点
+  - 整点播报
   - 整点报时
 support_platforms:
   - aiocqhttp

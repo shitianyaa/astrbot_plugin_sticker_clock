@@ -1,4 +1,4 @@
-"""AstrBot 整点贴纸提醒插件
+"""AstrBot 整点播报插件
 
 移植自 imxieyi/sticker_time_bot（Telegram Node.js 版）。
 核心：每小时整点向已订阅会话发送 images/{hour % 12}.png 贴纸。
@@ -22,7 +22,7 @@ KV_SUBSCRIBERS = "subscribers"  # list[str] —— 订阅会话的 unified_msg_o
 KV_CHATS = "chats"  # dict[umo, dict] —— 每个会话的配置
 SCHEDULER_POLL_SECONDS = 30  # 调度器轮询间隔
 DEFAULT_TIMEZONE = "Asia/Shanghai"
-LOG_PREFIX = "[StickerClock]"
+LOG_PREFIX = "[HourlyBroadcast]"
 
 
 def _safe_zoneinfo(name: str) -> datetime.tzinfo:
@@ -49,10 +49,10 @@ except ZoneInfoNotFoundError:
 @register(
     "astrbot_plugin_sticker_clock",
     "shitianyaa",
-    "整点贴纸提醒",
-    "1.0.2",
+    "整点播报",
+    "1.0.3",
 )
-class StickerClockPlugin(Star):
+class HourlyBroadcastPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
         super().__init__(context)
         self.config = config
@@ -562,12 +562,12 @@ class StickerClockPlugin(Star):
 
     @filter.command_group("clock")
     def clock(self):
-        """整点贴纸提醒指令组"""
+        """整点播报指令组"""
         pass
 
     @clock.command("start")
     async def cmd_start(self, event: AstrMessageEvent):
-        """订阅当前会话的整点贴纸推送"""
+        """订阅当前会话的整点播报"""
         umo = event.unified_msg_origin
         subs = await self._get_subscribers()
         if umo in subs:
@@ -587,7 +587,7 @@ class StickerClockPlugin(Star):
 
     @clock.command("stop")
     async def cmd_stop(self, event: AstrMessageEvent):
-        """取消当前会话的整点贴纸推送"""
+        """取消当前会话的整点播报"""
         umo = event.unified_msg_origin
         subs = await self._get_subscribers()
         if umo not in subs:
@@ -624,7 +624,7 @@ class StickerClockPlugin(Star):
         now = datetime.datetime.now(tz)
 
         lines = [
-            "⏰ 整点贴纸状态",
+            "⏰ 整点播报状态",
             f"订阅: {sub_status}",
             f"全局开关: {'✅ 启用' if self.config.get('enabled', True) else '❌ 禁用'}",
             f"会话 ID: {umo}",
@@ -919,7 +919,7 @@ class StickerClockPlugin(Star):
     async def cmd_help(self, event: AstrMessageEvent):
         """查看所有指令"""
         yield event.plain_result(
-            "🕒 整点贴纸时钟 指令一览\n\n"
+            "🕒 整点播报 指令一览\n\n"
             "[订阅]\n"
             "/clock start          订阅当前会话\n"
             "/clock stop           取消订阅\n"

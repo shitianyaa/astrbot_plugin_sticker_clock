@@ -1,6 +1,6 @@
 {
   "enabled": {
-    "description": "启用整点贴纸推送",
+    "description": "启用整点播报",
     "type": "bool",
     "default": true,
     "hint": "关闭后定时任务暂停，但订阅状态、配置等不会丢失"

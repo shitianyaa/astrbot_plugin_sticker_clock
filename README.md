@@ -1,6 +1,6 @@
 # astrbot_plugin_sticker_clock
 
-> 整点贴纸提醒 —— 每小时整点向订阅会话发送一张贴纸图片。
+> 整点播报 —— 每小时整点向订阅会话发送一张贴纸图片。
 
 移植自 Telegram 项目 [imxieyi/sticker_time_bot](https://github.com/imxieyi/sticker_time_bot) 的 AstrBot Python 版。
 
@@ -135,7 +135,7 @@ astrbot_plugin_sticker_clock/
 - **作者**：@Actfs2013
 - **预览 / 原始来源**：[https://fstik.app/stickerSet/what_what_time_is_it](https://fstik.app/stickerSet/what_what_time_is_it)
 
-贴纸版权归原作者 [@Actfs2013](https://t.me/Actfs2013) 所有，本仓库仅作为整点报时插件的默认素材便利使用。
+贴纸版权归原作者 [@Actfs2013](https://t.me/Actfs2013) 所有，本仓库仅作为整点播报插件的默认素材便利使用。
 
 > **如果你是原作者或版权方，认为此处使用侵犯了你的权益，请通过 [Issue](https://github.com/shitianyaa/astrbot_plugin_sticker_clock/issues) 联系，我会立即下架相关图片。**
 
