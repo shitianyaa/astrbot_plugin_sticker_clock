@@ -50,7 +50,7 @@ except ZoneInfoNotFoundError:
     "astrbot_plugin_sticker_clock",
     "shitianyaa",
     "整点播报",
-    "1.0.3",
+    "1.0.4",
 )
 class HourlyBroadcastPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
@@ -173,6 +173,43 @@ class HourlyBroadcastPlugin(Star):
     def _should_send_at_hour(self, cd: dict, hour: int) -> bool:
         """根据会话配置判断当前小时是否应该发送
 
+        分两层：
+        - 基础层（与原 Telegram bot 一致）：白名单 / 睡眠时段 / 全局默认
+        - 叠加层（新增，AND 组合）：排除时段、间隔小时
+        任一层判定为 False 则不发送。
+        """
+        if not self._passes_base_filters(cd, hour):
+            return False
+
+        # 排除时段（任一段命中则跳过；端点包含）
+        for rng in cd.get("exclude_ranges") or []:
+            if not isinstance(rng, (list, tuple)) or len(rng) != 2:
+                continue
+            try:
+                start, end = int(rng[0]), int(rng[1])
+            except (TypeError, ValueError):
+                continue
+            if self._hour_in_exclude_range(hour, start, end):
+                return False
+
+        # 间隔小时
+        try:
+            interval = int(cd.get("interval") or 0)
+        except (TypeError, ValueError):
+            interval = 0
+        if interval >= 2:
+            try:
+                offset = int(cd.get("interval_offset") or 0)
+            except (TypeError, ValueError):
+                offset = 0
+            if (hour - offset) % interval != 0:
+                return False
+
+        return True
+
+    def _passes_base_filters(self, cd: dict, hour: int) -> bool:
+        """基础过滤链：
+
         优先级（与原 Telegram bot 一致 + 全局默认兜底）：
         1. timelist（白名单）非空：只有 hour 在列表里才发
         2. 会话自己设置了 sleeptime+waketime：按睡眠窗口计算
@@ -215,6 +252,19 @@ class HourlyBroadcastPlugin(Star):
         if sleep > wake:
             return not (hour > sleep or hour < wake)
         return True
+
+    @staticmethod
+    def _hour_in_exclude_range(hour: int, start: int, end: int) -> bool:
+        """判断 hour 是否落在排除段 [start, end]，端点包含。
+
+        与睡眠时段相反：排除段端点都不发送。
+          start <= end : 命中 start <= hour <= end（同日范围）
+          start >  end : 命中 hour >= start 或 hour <= end（跨夜，如 22→7 含 22,23,0..7）
+          start == end : 命中单个小时
+        """
+        if start <= end:
+            return start <= hour <= end
+        return hour >= start or hour <= end
 
     def _parse_default_hour(self, key: str) -> int | None:
         try:
@@ -651,6 +701,36 @@ class HourlyBroadcastPlugin(Star):
                 )
             else:
                 lines.append("过滤规则: 全天发送")
+
+        # 排除时段（端点包含，与睡眠时段相反）
+        exclude_ranges = cd.get("exclude_ranges") or []
+        if exclude_ranges:
+            parts = []
+            for rng in exclude_ranges:
+                if not isinstance(rng, (list, tuple)) or len(rng) != 2:
+                    continue
+                try:
+                    s, e = int(rng[0]), int(rng[1])
+                except (TypeError, ValueError):
+                    continue
+                tag = "（跨夜）" if s > e else ""
+                parts.append(f"{s}:00~{e}:00{tag}")
+            if parts:
+                lines.append(f"排除时段: {', '.join(parts)}（端点都不发送）")
+
+        # 间隔小时
+        try:
+            interval = int(cd.get("interval") or 0)
+        except (TypeError, ValueError):
+            interval = 0
+        if interval >= 2:
+            try:
+                offset = int(cd.get("interval_offset") or 0)
+            except (TypeError, ValueError):
+                offset = 0
+            hits = ", ".join(str(h) for h in range(24) if (h - offset) % interval == 0)
+            lines.append(f"间隔: 每 {interval} 小时一次，从 {offset}:00 起 [{hits}]")
+
         yield event.plain_result("\n".join(lines))
 
     @clock.command("timezone", alias={"tz"})
@@ -854,6 +934,174 @@ class HourlyBroadcastPlugin(Star):
         await self._update_chat_data(umo, timelist=None)
         yield event.plain_result("✅ 白名单已清空")
 
+    # ----- 排除时段 -----
+
+    @clock.command("addexclude")
+    async def cmd_addexclude(
+        self, event: AstrMessageEvent, start: str = "", end: str = ""
+    ):
+        """添加排除时段（端点包含）。用法: /clock addexclude <起> <止>
+
+        示例:
+          /clock addexclude 12 14   排除 12,13,14 三个小时
+          /clock addexclude 22 7    跨夜：排除 22,23,0,1,2,3,4,5,6,7
+          /clock addexclude 5 5     仅排除 5 点
+        """
+        umo = event.unified_msg_origin
+        if not start or not end:
+            yield event.plain_result(
+                "用法: /clock addexclude <起> <止>\n"
+                "示例: /clock addexclude 12 14（排除 12-14）\n"
+                "     /clock addexclude 22 7（跨夜排除 22 ~ 次日 7）"
+            )
+            return
+        s = self._parse_hour(start)
+        e = self._parse_hour(end)
+        if s is None or e is None:
+            yield event.plain_result("❌ 起止小时必须为 0-23 整数")
+            return
+        cd = await self._get_chat_data(umo)
+        ranges = list(cd.get("exclude_ranges") or [])
+        # 重复段直接拒绝
+        for rng in ranges:
+            if (
+                isinstance(rng, (list, tuple))
+                and len(rng) == 2
+                and int(rng[0]) == s
+                and int(rng[1]) == e
+            ):
+                yield event.plain_result(f"{s}:00 ~ {e}:00 已在排除列表里")
+                return
+        ranges.append([s, e])
+        await self._update_chat_data(umo, exclude_ranges=ranges)
+        cross = "（跨夜）" if s > e else ""
+        yield event.plain_result(
+            f"✅ 已添加排除时段 {s}:00 ~ {e}:00{cross}（端点都不发送）"
+        )
+
+    @clock.command("delexclude")
+    async def cmd_delexclude(self, event: AstrMessageEvent, start: str = ""):
+        """删除以指定起始小时开头的排除段。用法: /clock delexclude <起>"""
+        umo = event.unified_msg_origin
+        if not start:
+            yield event.plain_result("用法: /clock delexclude <起>，按起始小时匹配")
+            return
+        s = self._parse_hour(start)
+        if s is None:
+            yield event.plain_result(f"❌ {start} 不是有效小时（应为 0-23）")
+            return
+        cd = await self._get_chat_data(umo)
+        ranges = list(cd.get("exclude_ranges") or [])
+        for i, rng in enumerate(ranges):
+            if (
+                isinstance(rng, (list, tuple))
+                and len(rng) == 2
+                and int(rng[0]) == s
+            ):
+                removed = ranges.pop(i)
+                await self._update_chat_data(
+                    umo, exclude_ranges=ranges if ranges else None
+                )
+                yield event.plain_result(
+                    f"✅ 已移除 {int(removed[0])}:00 ~ {int(removed[1])}:00"
+                )
+                return
+        yield event.plain_result(f"未找到以 {s}:00 开头的排除段")
+
+    @clock.command("listexcludes")
+    async def cmd_listexcludes(self, event: AstrMessageEvent):
+        """查看所有排除时段"""
+        cd = await self._get_chat_data(event.unified_msg_origin)
+        ranges = cd.get("exclude_ranges") or []
+        if not ranges:
+            yield event.plain_result("排除列表为空")
+            return
+        lines = [f"排除时段（共 {len(ranges)} 段，端点都不发送）:"]
+        for rng in ranges:
+            if not isinstance(rng, (list, tuple)) or len(rng) != 2:
+                continue
+            try:
+                s, e = int(rng[0]), int(rng[1])
+            except (TypeError, ValueError):
+                continue
+            cross = "（跨夜）" if s > e else ""
+            lines.append(f"  {s:02d}:00 ~ {e:02d}:00{cross}")
+        yield event.plain_result("\n".join(lines))
+
+    @clock.command("clearexcludes")
+    async def cmd_clearexcludes(self, event: AstrMessageEvent):
+        """清空排除时段"""
+        umo = event.unified_msg_origin
+        cd = await self._get_chat_data(umo)
+        if not (cd.get("exclude_ranges") or []):
+            yield event.plain_result("排除列表本来就是空的")
+            return
+        await self._update_chat_data(umo, exclude_ranges=None)
+        yield event.plain_result("✅ 排除时段已清空")
+
+    # ----- 间隔小时 -----
+
+    @clock.command("interval")
+    async def cmd_interval(
+        self, event: AstrMessageEvent, n_str: str = "", offset_str: str = ""
+    ):
+        """每 N 小时发送一次，可选起始偏移。用法: /clock interval <N> [起始小时]
+
+        示例:
+          /clock interval 2       0,2,4,6,...,22
+          /clock interval 2 1     1,3,5,...,23
+          /clock interval 3 0     0,3,6,9,12,15,18,21
+          /clock interval 0       关闭（每小时都发）
+        """
+        umo = event.unified_msg_origin
+        if not n_str:
+            cd = await self._get_chat_data(umo)
+            n = int(cd.get("interval") or 0)
+            o = int(cd.get("interval_offset") or 0)
+            if n < 2:
+                yield event.plain_result("当前间隔: 关闭（每小时都发）")
+            else:
+                yield event.plain_result(f"当前间隔: 每 {n} 小时一次，从 {o}:00 起")
+            return
+        try:
+            n = int(n_str.strip())
+        except (TypeError, ValueError):
+            yield event.plain_result("❌ N 必须是整数")
+            return
+        if n < 0 or n > 24:
+            yield event.plain_result("❌ N 必须为 0-24（0 或 1 表示关闭）")
+            return
+        if n < 2:
+            # 关闭间隔，并清除 offset
+            await self._update_chat_data(umo, interval=None, interval_offset=None)
+            yield event.plain_result("✅ 已关闭间隔（每小时都发）")
+            return
+        offset = 0
+        if offset_str:
+            o = self._parse_hour(offset_str)
+            if o is None:
+                yield event.plain_result("❌ 起始小时必须为 0-23 整数")
+                return
+            offset = o
+        await self._update_chat_data(umo, interval=n, interval_offset=offset)
+        # 给个直观预览
+        hits = [h for h in range(24) if (h - offset) % n == 0]
+        preview = ", ".join(f"{h}" for h in hits)
+        yield event.plain_result(
+            f"✅ 已设为每 {n} 小时一次，从 {offset}:00 起\n触发整点: {preview}"
+        )
+
+    @clock.command("nointerval")
+    async def cmd_nointerval(self, event: AstrMessageEvent):
+        """关闭间隔（每小时都发）"""
+        umo = event.unified_msg_origin
+        cd = await self._get_chat_data(umo)
+        if int(cd.get("interval") or 0) < 2:
+            yield event.plain_result("本来就没有设置间隔")
+            return
+        await self._update_chat_data(umo, interval=None, interval_offset=None)
+        yield event.plain_result("✅ 已关闭间隔（每小时都发）")
+
     @clock.command("test")
     async def cmd_test(self, event: AstrMessageEvent, hour_str: str = ""):
         """立即发送当前小时（或指定小时）的贴纸用于测试。用法: /clock test [0-23]"""
@@ -935,10 +1183,22 @@ class HourlyBroadcastPlugin(Star):
             "/clock delhour 9      移除\n"
             "/clock listhours      查看\n"
             "/clock clearhours     清空\n"
+            "\n[排除时段]（端点都不发送，可多段，可跨夜）\n"
+            "/clock addexclude 12 14   排除 12-14（含端点）\n"
+            "/clock addexclude 22 7    跨夜排除 22 ~ 次日 7\n"
+            "/clock delexclude 12      删除以 12 开头的段\n"
+            "/clock listexcludes       查看所有段\n"
+            "/clock clearexcludes      清空\n"
+            "\n[间隔小时]（每 N 小时一次，可指定起始）\n"
+            "/clock interval 2         0,2,4,6,...,22\n"
+            "/clock interval 2 1       1,3,5,...,23（从 1 点起）\n"
+            "/clock interval 0         关闭间隔\n"
+            "/clock nointerval         关闭间隔\n"
             "\n[其他]\n"
             "/clock test [hour]    立即测试发送贴纸\n"
             "/clock targets        查看所有推送目标（管理员）\n"
-            "\n💡 全局设置（默认时区、默认睡眠时段、预设订阅列表等）"
+            "\n💡 多种规则同时设置时按 AND 叠加：白名单 ∩ 睡眠 ∩ 排除 ∩ 间隔。\n"
+            "💡 全局设置（默认时区、默认睡眠时段、预设订阅列表等）"
             "在 AstrBot WebUI 的插件配置面板里调整。"
         )
 

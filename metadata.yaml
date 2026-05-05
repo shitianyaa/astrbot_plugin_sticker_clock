@@ -1,5 +1,5 @@
 name: astrbot_plugin_sticker_clock
-version: 1.0.3
+version: 1.0.4
 display_name: 整点播报
 short_desc: 整点播报，每小时整点给群里发一张贴纸
 description: |
@@ -9,6 +9,8 @@ description: |
   - /clock tz <Asia/Shanghai> 自定义时区
   - /clock sleeptime / waketime / nosleep   设置睡眠时段（时间边界包含在内，sleeptime 和 waketime 整点都会发送）
   - /clock addhour / delhour / listhours / clearhours   自定义触发小时白名单
+  - /clock addexclude / delexclude / listexcludes / clearexcludes   自定义排除时段（多段、可跨夜、端点都不发送）
+  - /clock interval <N> [起始]   每 N 小时发一次，可指定起始整点
   - /clock autodelete on|off  推新贴纸时自动删除上一条（仅 aiocqhttp 支持）
 author: shitianyaa
 repo: https://github.com/shitianyaa/astrbot_plugin_sticker_clock
