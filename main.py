@@ -50,7 +50,7 @@ except ZoneInfoNotFoundError:
     "astrbot_plugin_sticker_clock",
     "shitianyaa",
     "整点播报",
-    "1.0.4",
+    "1.0.5",
 )
 class HourlyBroadcastPlugin(Star):
     def __init__(self, context: Context, config: AstrBotConfig):
@@ -192,18 +192,10 @@ class HourlyBroadcastPlugin(Star):
             if self._hour_in_exclude_range(hour, start, end):
                 return False
 
-        # 间隔小时
-        try:
-            interval = int(cd.get("interval") or 0)
-        except (TypeError, ValueError):
-            interval = 0
-        if interval >= 2:
-            try:
-                offset = int(cd.get("interval_offset") or 0)
-            except (TypeError, ValueError):
-                offset = 0
-            if (hour - offset) % interval != 0:
-                return False
+        # 间隔小时：会话自己设了就用自己的，否则回退全局默认
+        interval, offset = self._resolve_interval(cd)
+        if interval >= 2 and (hour - offset) % interval != 0:
+            return False
 
         return True
 
@@ -272,6 +264,35 @@ class HourlyBroadcastPlugin(Star):
         except (TypeError, ValueError):
             return None
         return v if 0 <= v <= 23 else None
+
+    def _resolve_interval(self, cd: dict) -> tuple[int, int]:
+        """返回 (interval, offset)。
+
+        会话有自己的有效 interval（≥2）就用自己的；否则回退全局默认。
+        interval < 2 视为禁用，统一返回 (0, 0)。
+        """
+        try:
+            chat_n = int(cd.get("interval") or 0)
+        except (TypeError, ValueError):
+            chat_n = 0
+        if chat_n >= 2:
+            try:
+                chat_off = int(cd.get("interval_offset") or 0)
+            except (TypeError, ValueError):
+                chat_off = 0
+            return chat_n, chat_off if 0 <= chat_off <= 23 else 0
+
+        try:
+            g_n = int(self.config.get("default_interval", 0))
+        except (TypeError, ValueError):
+            g_n = 0
+        if g_n < 2 or g_n > 24:
+            return 0, 0
+        try:
+            g_off = int(self.config.get("default_interval_offset", 0))
+        except (TypeError, ValueError):
+            g_off = 0
+        return g_n, g_off if 0 <= g_off <= 23 else 0
 
     # =====================================================================
     # 发送
@@ -718,18 +739,18 @@ class HourlyBroadcastPlugin(Star):
             if parts:
                 lines.append(f"排除时段: {', '.join(parts)}（端点都不发送）")
 
-        # 间隔小时
+        # 间隔小时（会话自己 / 全局默认 / 无）
         try:
-            interval = int(cd.get("interval") or 0)
+            chat_interval = int(cd.get("interval") or 0)
         except (TypeError, ValueError):
-            interval = 0
+            chat_interval = 0
+        interval, offset = self._resolve_interval(cd)
         if interval >= 2:
-            try:
-                offset = int(cd.get("interval_offset") or 0)
-            except (TypeError, ValueError):
-                offset = 0
             hits = ", ".join(str(h) for h in range(24) if (h - offset) % interval == 0)
-            lines.append(f"间隔: 每 {interval} 小时一次，从 {offset}:00 起 [{hits}]")
+            source = "（会话）" if chat_interval >= 2 else "（全局默认）"
+            lines.append(
+                f"间隔: 每 {interval} 小时一次，从 {offset}:00 起{source} [{hits}]"
+            )
 
         yield event.plain_result("\n".join(lines))
 

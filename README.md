@@ -95,6 +95,8 @@
 | `push_targets` | **预设订阅列表**（管理员集中管理，无需 /clock start） | `[]` |
 | `default_sleeptime` | **新订阅者默认睡眠开始时间**（-1 = 禁用） | `-1` |
 | `default_waketime` | **新订阅者默认起床时间**（-1 = 禁用） | `-1` |
+| `default_interval` | **全局默认间隔小时**（0/1 = 禁用，2-24 生效） | `0` |
+| `default_interval_offset` | **全局默认间隔起始小时**（0-23） | `0` |
 | `image_dir` | 自定义贴纸目录绝对路径（留空 = 插件 images/） | `""` |
 | `image_ext_priority` | 贴纸文件扩展名优先级 | `[png, jpg, jpeg, gif, webp]` |
 | `use_24h_mode` | 24 小时各不同图（需 0-23.png 共 24 张） | `false` |
@@ -140,6 +142,8 @@ push_targets:
 - `interval 2 1` → 1, 3, 5, ..., 23（从 1 起的奇数小时）
 - `interval 3 0` → 0, 3, 6, 9, 12, 15, 18, 21
 - `interval 0` 或 `/clock nointerval` → 关闭间隔
+
+**全局默认**：在 WebUI 配置 `default_interval` + `default_interval_offset` 后，所有未通过 `/clock interval` 自行设置的会话都会使用这个默认值。会话自己设了（N≥2）就完全用自己的，不再继承全局默认。`/clock interval 0` 后的会话也会重新跟随全局默认。
 
 ### 🧮 过滤规则叠加（AND）
 

@@ -1,5 +1,5 @@
 name: astrbot_plugin_sticker_clock
-version: 1.0.4
+version: 1.0.5
 display_name: 整点播报
 short_desc: 整点播报，每小时整点给群里发一张贴纸
 description: |
